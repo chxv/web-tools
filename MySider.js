@@ -38,7 +38,7 @@ class MySider extends React.Component{
                 onCollapse={(collapsed, type) => { console.log(collapsed, type) }}
         >
           <Menu
-            mode="inline" /*defaultSelectedKeys={[initial_item]}*/ defaultOpenKeys={[initial_dir]}
+            mode="inline" /*defaultSelectedKeys={[initial_item]}*/ defaultOpenKeys={[initial_dir, "funny"]}
             style={{ height: '100%', borderRight: 0 }}
              onClick={this.handleClick}
           >
@@ -49,7 +49,7 @@ class MySider extends React.Component{
               <Menu.Item key="4">option4</Menu.Item>
             </SubMenu>
             <SubMenu key="funny" title={<span><Icon type="bulb" />funny</span>}>
-              <Menu.Item key="5">option5</Menu.Item>
+              <Menu.Item key="5">粘贴板</Menu.Item>
               <Menu.Item key="6">option6</Menu.Item>
               <Menu.Item key="7">option7</Menu.Item>
               <Menu.Item key="8">option8</Menu.Item>
