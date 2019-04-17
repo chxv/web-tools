@@ -76,12 +76,12 @@ export default class SharePage extends React.Component {
   }
   ShareContent = (e) => {
     // 上传 - 写
-    console.log(this.state.new_comment_content, this.state.new_comment_key, this.state.new_comment_username);
+    let d = new Date();
     let content = JSON.stringify({
       "author": this.state.new_comment_username,
       "content": this.state.new_comment_content, 
       "avatar":"",
-      "datetime":"",
+      "datetime": d.getTime(),
     })
     let key = this.state.new_comment_key ? this.state.new_comment_key : ""; // avoid NoneType
     let url = `${configs['api-method']}://${configs['api-host']}/api/paste/write/`;
@@ -97,11 +97,15 @@ export default class SharePage extends React.Component {
       },
       redirect: "follow", // manual, *follow, error
       referrer: "no-referrer", // no-referrer, *client
-      body: JSON.stringify({ "data": content, "key": this.new_comment_key }), // body data type must match "Content-Type" header
+      body: JSON.stringify({ "data": content, "key": this.state.new_comment_key }), // body data type must match "Content-Type" header
     })
       .then(response => response.json())
       .then(res => {
-        console.log(res);
+        if(res.common.status){
+          // 写入成功
+          this.ReadComments();
+          this.ClearInput();
+        }
       }).catch(error => console.error("Error When Write(post): ", error));
   }
   ReadByKey = (e) => {
@@ -111,21 +115,29 @@ export default class SharePage extends React.Component {
   }
 
   // called func
-  ReadComments = (e, private_key = '') => {
-    console.log(configs);
+  ReadComments = (private_key = '') => {
+    // console.log(configs);
     let get_url = `${configs['api-method']}://${configs['api-host']}/api/paste/read/${private_key}`;
+    // console.log('pk:', private_key);
     fetch(get_url).then(response => {
       return response.json();
     }).then(res => {
-      console.log('get data: ', res);
       if (res.common.status) {
         let ndata = new Array();
         res.result.forEach(element => {
-          console.log("elem:", element)
-          ndata.push(JSON.parse(element));
+          // 过滤非法值
+          if(element.length < 5){
+            this.setState({data: []});
+            return;
+          }
+          let t = JSON.parse(element);
+          if(parseInt(t.datetime)){
+            let date = new Date(parseInt(t.datetime));
+            t.datetime = date.toString();
+          }
+          ndata.push(t);
         });
         this.setState({ data: ndata });
-        console.log(this.state.data);
       }
       else{
         console.log("can't get data");
@@ -133,9 +145,21 @@ export default class SharePage extends React.Component {
     });
   }
 
+  ClearInput = () => {
+    this.setState({
+      new_comment_username: '',
+      new_comment_key: '',
+      new_comment_content: '',
+    });
+  }
+
   // render
   render() {
-    const { new_comment_username, show_more_setting } = this.state;
+    const { new_comment_username,
+            new_comment_key, 
+            new_comment_content,
+            comment_private_key,
+            show_more_setting } = this.state;
     const suffix = new_comment_username ? <Icon type="close-circle" onClick={this.emitEmpty} /> : null;
     let more_setting = null;  // 声明变量
     if (show_more_setting) {
@@ -145,6 +169,7 @@ export default class SharePage extends React.Component {
           <Input
             prefix={<Icon type='lock' />}
             placeholder="private key: 设置对分享内容加密"
+            value={new_comment_key}
             onChange={this.onChangeWriteKey}
           />
           <br /><br />
@@ -183,13 +208,14 @@ export default class SharePage extends React.Component {
         </Row>
 
         {more_setting}
-        <TextArea rows={5} onChange={this.onChangeContent} />
+        <TextArea rows={5} value={new_comment_content} onChange={this.onChangeContent} />
 
         {/* 输入key，读取 */}
         <br /> <br />
         <Row>
           <Col span={18}>
             <Input
+              value={comment_private_key}
               onChange={this.onChangeReadkey}
               prefix={<Icon type='lock' />}
               placeholder="private key: 提取加密分享"
