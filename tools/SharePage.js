@@ -131,18 +131,29 @@ export default class SharePage extends React.Component {
             return;
           }
           let t = JSON.parse(element);
-          if(parseInt(t.datetime)){
-            let date = new Date(parseInt(t.datetime));
-            t.datetime = date.toString();
-          }
           ndata.push(t);
         });
+        // 排序
+        ndata = ndata.sort(this.SortData);
+        // 转化数字为字符串
+        ndata.forEach(element =>{
+          if(parseInt(element.datetime)){
+            let date = new Date(parseInt(element.datetime));
+            element.datetime = date.toString();
+          }
+        });
+        //保存
         this.setState({ data: ndata });
       }
       else{
         console.log("can't get data");
       }
     });
+  }
+
+  //排序函数
+  SortData = (a, b) =>{
+    return b.datetime - a.datetime;
   }
 
   ClearInput = () => {
